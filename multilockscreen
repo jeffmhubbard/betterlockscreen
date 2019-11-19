@@ -339,7 +339,7 @@ update () {
 
 			rect_x=$((pos_x + $(logical_px 15 1)))
 			rect_y=$((pos_y + res_y - $(logical_px 120 2)))
-			positions+="+$((rect_x))+$((rect_y)) "
+			positions+=("+$((rect_x))+$((rect_y))")
 		fi
 
 		echo "Found: $device ($id)"
@@ -394,7 +394,7 @@ update () {
 	echo "Rendering final locker images..."
 	create_loginbox
 
-	for pos in ${positions[@]}; do
+	for pos in "${positions[@]}"; do
 		PARAM_RECT="$PARAM_RECT $RECTANGLE -geometry $pos -composite "
 	done
 
