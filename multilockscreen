@@ -539,10 +539,9 @@ usage() {
 	echo '		E.g: multilockscreen -w dimblur (for dimmed + blurred wallpaper)'
 	echo
 	echo
-	echo '	-d --display'
+	echo '	--display'
 	echo '		to be used after -u or -l (must be the same)'
 	echo '		used to set which screen to display login box.'
-	echo '		E.g: multilockscreen -u path/to/image.png -d 1'
 	echo '		E.g: multilockscreen -u path/to/image.png --display 2'
 	echo
 	echo
@@ -560,8 +559,13 @@ usage() {
 	echo
 	echo '	--text'
 	echo '		to set custom lockscreen text (max 31 chars)'
-	echo "		E.g: multilockscreen -l dim -t \"Don't touch my machine!\""
 	echo '		E.g: multilockscreen --text "Hi, user!" -s blur'
+	echo
+	echo
+	echo '	--fx'
+	echo '		to be used after -u'
+	echo '		used to set which effects are generated. Default to all effects.'
+	echo '		E.g: multilockscreen -u path/to/image.png --fx dimblur,color'
 	echo
 	echo
 	echo '	--dim'
@@ -578,7 +582,7 @@ usage() {
 	echo
 	echo '	--pixel'
 	echo '		to be used after -u'
-	echo '		used to set shrink and grow percentages. Default to 10,1000.'
+	echo '		used to set scale percentages. Default to 10,1000.'
 	echo '		E.g: multilockscreen -u path/to/image.png --pixel 10,1000'
 	echo
 	echo
@@ -617,7 +621,7 @@ for arg in "$@"; do
 			runsuspend=true
 			;&
 
-		-w | --wall | --wallpaper)
+		-w | --wall)
 			wallpaper "$2"
 			shift 2
 			;;
