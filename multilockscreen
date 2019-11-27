@@ -61,7 +61,7 @@ init_config () {
 	CUR_L_COLOR="$CUR_DIR/lock_color.png"
 
 	# Original DPMS timeout
-	DEFAULT_TIMEOUT=`cut -d ' ' -f4 <<< $(xset q | sed -n '25p')`
+	DEFAULT_TIMEOUT=$(cut -d ' ' -f4 <<< "$(xset q | sed -n '25p')")
 }
 init_config
 
