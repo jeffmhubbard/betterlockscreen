@@ -330,9 +330,10 @@ purge_cache () {
 # update lockscreen and wallpaper images
 update () {
 
-	echo "Updating Image Cache..."
-
 	local image="$1"
+
+	echo "Updating Image Cache..."
+	mkdir -p "$CACHE_DIR" &>/dev/null
 
 	get_user_wall "$image" # USER_WALL
 	echo "Original Image: $USER_WALL"
