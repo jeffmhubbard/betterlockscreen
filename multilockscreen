@@ -33,13 +33,13 @@ init_config () {
 	solid_color=333333
 
 	# user configuration file
-	USER_CONF="$HOME/.config/multilockscreenrc"
+	USER_CONF="$HOME/.config/multilock/config"
 	if [ -e "$USER_CONF" ]; then
 		# shellcheck source=/dev/null
 		source "$USER_CONF"
 	fi
 
-	CACHE_DIR="$HOME/.cache/i3lock"
+	CACHE_DIR="$HOME/.cache/multilock"
 	CUR_DIR="$CACHE_DIR/current"
 
 	# wallpaper
