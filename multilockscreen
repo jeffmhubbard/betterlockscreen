@@ -6,23 +6,7 @@
 
 init_config () {
 
-	# default configuration options
-	insidecolor=00000000
-	ringcolor=ffffffff
-	keyhlcolor=d23c3dff
-	bshlcolor=d23c3dff
-	separatorcolor=00000000
-	insidevercolor=00000000
-	insidewrongcolor=d23c3dff
-	ringvercolor=ffffffff
-	ringwrongcolor=ffffffff
-	verifcolor=ffffffff
-	timecolor=ffffffff
-	datecolor=ffffffff
-	loginbox=00000066
-	loginshadow=00000000
-	locktext="Type password to unlock..."
-	font="sans-serif"
+	# default options
 	display_on=0
 	span_image=false
 	lock_timeout=5
@@ -31,6 +15,24 @@ init_config () {
 	blur_level=1
 	pixel_scale=10,1000
 	solid_color=333333
+
+	# default theme
+	loginbox=00000066
+	loginshadow=00000000
+	locktext="Type password to unlock..."
+	font="sans-serif"
+	ringcolor=ffffffff
+	insidecolor=00000000
+	separatorcolor=00000000
+	ringvercolor=ffffffff
+	insidevercolor=00000000
+	ringwrongcolor=ffffffff
+	insidewrongcolor=d23c3dff
+	keyhlcolor=d23c3dff
+	bshlcolor=d23c3dff
+	verifcolor=ffffffff
+	timecolor=ffffffff
+	datecolor=ffffffff
 
 	# user configuration file
 	USER_CONF="$HOME/.config/multilock/config"
