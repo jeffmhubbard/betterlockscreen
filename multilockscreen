@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
-# Author : Pavan Jadhaw
-# Github Profile : https://github.com/pavanjadhaw
-# Project Repository : https://github.com/pavanjadhaw/betterlockscreen
+# multilockscreen
+# i3lock wrapper with multi-monitor support
+# https://github.com/jeffmhubbard/multilockscreen
 
 init_config () {
 
