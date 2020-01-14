@@ -70,7 +70,7 @@ init_config
 
 
 # called before screen is locked
-prelock() {
+prelock () {
 	# set dpms timeout
 	if [ -n "$lock_timeout" ]; then
 		xset dpms "$lock_timeout"
@@ -82,7 +82,7 @@ prelock() {
 }
 
 # lock screen with specified image
-lock() {
+lock () {
 
 	local image="$1"
 
@@ -103,7 +103,7 @@ lock() {
 }
 
 # in case image isn't found
-failsafe() {
+failsafe () {
 
 	local bgcolor="000000"
 	local text="ffffffff"
@@ -123,7 +123,7 @@ failsafe() {
 
 
 # called after screen is unlocked
-postlock() {
+postlock () {
 	# restore default dpms timeout
 	if [ -n "$lock_timeout" ]; then
 		xset dpms "$DEFAULT_TIMEOUT"
@@ -136,7 +136,7 @@ postlock() {
 
 
 # select effect and lock screen
-lockselect() {
+lockselect () {
 
 	prelock
 
@@ -154,7 +154,7 @@ lockselect() {
 }
 
 # calculate adjustments for hidpi displays
-logical_px() {
+logical_px () {
 
 	# $1: number of pixels to convert
 	# $2: 1 for width. 2 for height
@@ -201,7 +201,7 @@ get_display_list () {
 # get image path, sets $USER_WALL
 # if arg is file, return that
 # if arg is dir, return random image
-get_user_wall() {
+get_user_wall () {
 
 	local path="$1"
 
@@ -213,6 +213,26 @@ get_user_wall() {
 	rdir="${dir[RANDOM % ${#dir[@]}]}"
 	get_user_wall "$rdir"
 
+}
+
+# get image path, sets $USER_WALL_LEFT and $USER_WALL_RIGHT
+# if arg is file, return that
+# if arg is dir, return random image from first path provided
+get_user_wall_dual () {
+
+	local path_left="$1"
+	local path_right="$2"
+
+	if [ ! -d "$path_left" ] && [ ! -d "$path_right" ]; then
+		USER_WALL_LEFT="$path_left"
+		USER_WALL_RIGHT="$path_right"
+		return
+	fi
+
+	dir=("$path_left"/*)
+	rdir_left="${dir[RANDOM % ${#dir[@]}]}"
+	rdir_right="${dir[RANDOM % ${#dir[@]}]}"
+	get_user_wall_dual "$rdir_left" "$rdir_right"
 }
 
 # scale base image and generate effects
@@ -249,7 +269,7 @@ resize_and_render () {
 }
 
 # apply resize
-base_resize() {
+base_resize () {
 
 	local input="$1"
 	local output="$2"
@@ -264,7 +284,7 @@ base_resize() {
 }
 
 # apply dim
-fx_dim() {
+fx_dim () {
 	local input="$1"
 	local output="$2"
 
@@ -275,7 +295,7 @@ fx_dim() {
 }
 
 # apply blur
-fx_blur() {
+fx_blur () {
 	local input="$1"
 	local output="$2"
 	local size="$3"
@@ -292,7 +312,7 @@ fx_blur() {
 }
 
 # apply dimblur
-fx_dimblur() {
+fx_dimblur () {
 	local input="$1"
 	local output="$2"
 	local size="$3"
@@ -310,7 +330,7 @@ fx_dimblur() {
 }
 
 # pixelate
-fx_pixel() {
+fx_pixel () {
 	local input="$1"
 	local output="$2"
 
@@ -321,7 +341,7 @@ fx_pixel() {
 		"$output"
 }
 
-fx_dimpixel() {
+fx_dimpixel () {
 	local input="$1"
 	local output="$2"
 
@@ -334,7 +354,7 @@ fx_dimpixel() {
 }
 
 # create solid color
-fx_color() {
+fx_color () {
 	local output="$1"
 	local size="$2"
 
@@ -485,8 +505,128 @@ update () {
 
 }
 
+# update lockscreen and wallpaper images for dual wallpapers
+update_dual () {
+
+	local image_left="$1"
+	local image_right="$2"
+
+	echo "Updating Image Cache..."
+	mkdir -p "$CACHE_DIR" &>/dev/null
+
+	get_user_wall_dual "$image_left" "$image_right" # USER_WALL
+	echo "Original Image Left: $USER_WALL_LEFT"
+	echo "Original Image Right: $USER_WALL_RIGHT"
+
+	get_display_list # DISPLAY_LIST
+	get_total_size # TOTAL_SIZE
+	echo "Detected ${#DISPLAY_LIST[@]} Displays @ $TOTAL_SIZE Resolution"
+
+	# for display in "${DISPLAY_LIST[@]}"; do
+
+	# 	IFS=' ' read -r -a dinfo  <<< "$display"
+	# 	local id="${dinfo[0]}"
+	# 	local device="${dinfo[1]}"
+	# 	local geometry="${dinfo[2]}"
+
+	# 	read -r -a cols <<< "${geometry//[x+-]/ }"
+	# 	local position="${geometry#*${cols[1]}}"
+	# 	local resolution="${geometry%${position}*}"
+
+	# 	if [[ $id -eq "$display_on" ]] || [[ "$display_on" -eq 0 ]]; then
+
+	# 		IFS='x' read -r -a dimension <<< "$resolution"
+	# 		#res_x="${dimension[0]}"
+	# 		res_y="${dimension[1]}"
+	# 		read -r -a val <<< "${position//[+-]/ }"
+	# 		read -r -a sym <<< "${position//[0-9]/ }"
+	# 		pos_x="${sym[0]}${val[0]}"
+	# 		pos_y="${sym[1]}${val[1]}"
+
+	# 		rect_x=$((pos_x + $(logical_px 15 1)))
+	# 		rect_y=$((pos_y + res_y - $(logical_px 120 2)))
+	# 		positions+=("+$((rect_x))+$((rect_y))")
+	# 	fi
+
+	# 	echo "Display: $device ($id)"
+	# 	echo "Resolution: $resolution"
+		
+	# 	local path="$CACHE_DIR/$id-$device"
+	# 	purge_cache "$path"
+
+	# 	if [ "$span_image" = true ] && [ "$id" -gt 1 ]; then
+	# 		continue
+	# 	fi
+
+	# 	if [ "$span_image" = true ]; then
+	# 		resize_and_render "$USER_WALL" "$path" "$TOTAL_SIZE"
+	# 	else
+	# 		resize_and_render "$USER_WALL" "$path" "$resolution"
+
+	# 		PARAM_RESIZE="$PARAM_RESIZE $RES_RESIZE -geometry $position -composite "
+	# 		PARAM_DIM="$PARAM_DIM $RES_DIM -geometry $position -composite "
+	# 		PARAM_BLUR="$PARAM_BLUR $RES_BLUR -geometry $position -composite "
+	# 		PARAM_DIMBLUR="$PARAM_DIMBLUR $RES_DIMBLUR -geometry $position -composite "
+	# 		PARAM_PIXEL="$PARAM_PIXEL $RES_PIXEL -geometry $position -composite "
+	# 		PARAM_DIMPIXEL="$PARAM_DIMPIXEL $RES_DIMPIXEL -geometry $position -composite "
+	# 		PARAM_COLOR="$PARAM_COLOR $RES_COLOR -geometry $position -composite "
+	# 	fi
+		
+	# done
+	
+	# purge_cache "$CUR_DIR"
+
+	# if [ "$span_image" = true ] || [ ${#DISPLAY_LIST[@]} -lt 2 ]; then
+	# 	[[ -f "$RES_RESIZE" ]] && cp $RES_RESIZE $CUR_W_RESIZE
+	# 	[[ -f "$RES_DIM" ]] && cp $RES_DIM $CUR_W_DIM
+	# 	[[ -f "$RES_BLUR" ]] && cp $RES_BLUR $CUR_W_BLUR
+	# 	[[ -f "$RES_DIMBLUR" ]] && cp $RES_DIMBLUR $CUR_W_DIMBLUR
+	# 	[[ -f "$RES_PIXEL" ]] && cp $RES_PIXEL $CUR_W_PIXEL
+	# 	[[ -f "$RES_DIMPIXEL" ]] && cp $RES_DIMPIXEL $CUR_W_DIMPIXEL
+	# 	[[ -f "$RES_COLOR" ]] && cp $RES_COLOR $CUR_W_COLOR
+	# else
+	# 	echo "Creating canvas: $TOTAL_SIZE"
+	# 	[[ -f "$RES_RESIZE" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_RESIZE
+	# 	[[ -f "$RES_DIM" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_DIM
+	# 	[[ -f "$RES_BLUR" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_BLUR
+	# 	[[ -f "$RES_DIMBLUR" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_DIMBLUR
+	# 	[[ -f "$RES_PIXEL" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_PIXEL
+	# 	[[ -f "$RES_DIMPIXEL" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_DIMPIXEL
+	# 	[[ -f "$RES_COLOR" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_COLOR
+
+	# 	echo Rendering final wallpaper images...
+	# 	[[ -f "$CUR_W_RESIZE" ]] && convert $CUR_W_RESIZE $PARAM_RESIZE $CUR_W_RESIZE
+	# 	[[ -f "$CUR_W_DIM" ]] && convert $CUR_W_DIM $PARAM_DIM $CUR_W_DIM
+	# 	[[ -f "$CUR_W_BLUR" ]] && convert $CUR_W_BLUR $PARAM_BLUR $CUR_W_BLUR
+	# 	[[ -f "$CUR_W_DIMBLUR" ]] && convert $CUR_W_DIMBLUR $PARAM_DIMBLUR $CUR_W_DIMBLUR
+	# 	[[ -f "$CUR_W_PIXEL" ]] && convert $CUR_W_PIXEL $PARAM_PIXEL $CUR_W_PIXEL
+	# 	[[ -f "$CUR_W_DIMPIXEL" ]] && convert $CUR_W_DIMPIXEL $PARAM_DIMPIXEL $CUR_W_DIMPIXEL
+	# 	[[ -f "$CUR_W_COLOR" ]] && convert $CUR_W_COLOR $PARAM_COLOR $CUR_W_COLOR
+	# fi
+
+	# echo "Rendering final lockscreen images..."
+	# create_loginbox
+
+	# for pos in "${positions[@]}"; do
+	# 	PARAM_RECT="$PARAM_RECT $RECTANGLE -geometry $pos -composite "
+	# done
+
+	# [[ -f "$CUR_W_RESIZE" ]] && convert $CUR_W_RESIZE $PARAM_RECT $CUR_L_RESIZE
+	# [[ -f "$CUR_W_DIM" ]] && convert $CUR_W_DIM $PARAM_RECT $CUR_L_DIM
+	# [[ -f "$CUR_W_BLUR" ]] && convert $CUR_W_BLUR $PARAM_RECT $CUR_L_BLUR
+	# [[ -f "$CUR_W_DIMBLUR" ]] && convert $CUR_W_DIMBLUR $PARAM_RECT $CUR_L_DIMBLUR
+	# [[ -f "$CUR_W_PIXEL" ]] && convert $CUR_W_PIXEL $PARAM_RECT $CUR_L_PIXEL
+	# [[ -f "$CUR_W_DIMPIXEL" ]] && convert $CUR_W_DIMPIXEL $PARAM_RECT $CUR_L_DIMPIXEL
+	# [[ -f "$CUR_W_COLOR" ]] && convert $CUR_W_COLOR $PARAM_RECT $CUR_L_COLOR
+
+	# [[ $RECTANGLE ]] && rm "$RECTANGLE"
+
+	# echo "Done"
+
+}
+
 # set wallpaper with effect
-wallpaper() {
+wallpaper () {
 
 	local effect="$1"
 	local span
@@ -510,7 +650,7 @@ wallpaper() {
 }
 
 # help message
-usage() {
+usage () {
 	echo
 	echo "Usage: multilockscreen [-u <PATH>] [-l <EFFECT>] [-w <EFFECT>]"
 	echo
@@ -587,6 +727,13 @@ for arg in "$@"; do
 			shift 2
 			;;
 
+		--dual)
+			runupdate_dual=true
+			imagepath_left="$2"
+			imagepath_right="$3"
+			shift 3
+			;;
+
 		--display)
 			display_on="$2"
 			shift 2
@@ -644,8 +791,11 @@ for arg in "$@"; do
 	esac
 done
 
-# Run image generation
+# Run image generation (single wallpaper)
 [[ $runupdate ]] && update "$imagepath"
+
+# Run image generation (multi wallpaper)
+[[ $runupdate_dual ]] && update_dual "$imagepath_left" "$imagepath_right"
 
 # Activate lockscreen
 [[ $runlock ]] && lockselect "$lockstyle" && \
