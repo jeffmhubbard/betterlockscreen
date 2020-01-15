@@ -329,7 +329,7 @@ create_loginbox () {
 create_description () {
 	DESCRECT="$CUR_DIR/description.png"
 	local shadow="$CUR_DIR/shadow.png"
-	convert -background none -family "$(fc-match "$font" family)" -pointsize 14 -fill \#"$datecolor" label:"\ $description\ " -bordercolor \#"$loginbox" -border 10 $DESCRECT
+	convert -background none -family "$(fc-match "$font" family)" -style Normal -pointsize 14 -fill \#"$datecolor" label:"\ $description\ " -bordercolor \#"$loginbox" -border 10 $DESCRECT
 	convert $DESCRECT \
 		\( -clone 0 -background \#"$loginshadow" -shadow 100x5+0+0 \) +swap \
 		-background none -layers merge +repage $shadow
