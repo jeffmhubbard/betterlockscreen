@@ -199,21 +199,34 @@ get_display_list () {
 	done
 }
 
-# get image path, sets $USER_WALL
-# if arg is file, return that
-# if arg is dir, return random image
+# get image path, sets $USER_WALL_LIST
+# if arg is files, return that
+# if arg is dir, return random images
 get_user_wall() {
 
-	local path="$1"
+	local paths=("$@")
 
-	if [ ! -d "$path" ]; then
-		USER_WALL="$path"
-		return
+	# check to see if first item is a directory
+	if [ -d "${paths[0]}" ]; then
+		dir=("${paths[0]}"/*)
+		unset paths
 	fi
-	dir=("$path"/*)
-	rdir="${dir[RANDOM % ${#dir[@]}]}"
-	get_user_wall "$rdir"
 
+	# select random wallpaper from directory
+	if [ "$span_image" = false ] && [ -v dir ]; then
+		for display in "${DISPLAY_LIST[@]}"; do
+			paths+=("${dir[RANDOM % ${#dir[@]}]}")
+		done
+	fi
+
+	if [ "$span_image" = true ] && [ -v dir ]; then
+		echo 'here'
+		paths+=("${dir[RANDOM % ${#dir[@]}]}")
+	fi
+
+	for path in "${paths[@]}"; do
+		USER_WALL_LIST+=("$path")
+	done
 }
 
 # scale base image and generate effects
@@ -386,17 +399,17 @@ purge_cache () {
 # update lockscreen and wallpaper images
 update () {
 
-	local image="$1"
+	local images=("$@")
 
 	echo "Updating Image Cache..."
 	mkdir -p "$CACHE_DIR" &>/dev/null
 
-	get_user_wall "$image" # USER_WALL
-	echo "Original Image: $USER_WALL"
-
 	get_display_list # DISPLAY_LIST
 	get_total_size # TOTAL_SIZE
 	echo "Detected ${#DISPLAY_LIST[@]} Displays @ $TOTAL_SIZE Resolution"
+
+	get_user_wall "${images[@]}" # USER_WALL_LIST
+	echo "Original Image(s): ${USER_WALL_LIST[@]##*/}"
 
 	# Prepare description box to obtain width for positioning
 	if [ -z "$description" ]; then
@@ -408,7 +421,9 @@ update () {
 		local descheight=$(identify -format "%[fx:h]" "$DESCRECT")
 	fi
 
-	for display in "${DISPLAY_LIST[@]}"; do
+	for ((i=0; i<${#DISPLAY_LIST[@]}; i++)); do
+		display="${DISPLAY_LIST[$i]}"
+		USER_WALL="${USER_WALL_LIST[$i]}"
 
 		IFS=' ' read -r -a dinfo  <<< "$display"
 		local id="${dinfo[0]}"
@@ -610,7 +625,7 @@ for arg in "$@"; do
 	case "$1" in
 		-u | --update)
 			runupdate=true
-			imagepath="$2"
+			imagepaths+=("$2")
 			shift 2
 			;;
 
@@ -692,7 +707,7 @@ for arg in "$@"; do
 done
 
 # Run image generation
-[[ $runupdate ]] && update "$imagepath"
+[[ $runupdate ]] && update "${imagepaths[@]}"
 
 # Activate lockscreen
 [[ $runlock ]] && lockselect "$lockstyle" && \
