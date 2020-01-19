@@ -220,8 +220,14 @@ get_user_wall() {
 	fi
 
 	if [ "$span_image" = true ] && [ -v dir ]; then
-		echo 'here'
 		paths+=("${dir[RANDOM % ${#dir[@]}]}")
+	fi
+
+	# set image each display
+	if [ "${#paths[@]}" -eq 1 ] && [ ! -v dir ]; then
+		for ((i=1; i<${#DISPLAY_LIST[@]}; i++)); do
+			paths+=("${paths[0]}")
+		done
 	fi
 
 	for path in "${paths[@]}"; do
