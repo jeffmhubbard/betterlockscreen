@@ -438,7 +438,7 @@ update () {
 	echo "Detected ${#DISPLAY_LIST[@]} Displays @ $TOTAL_SIZE Resolution"
 
 	get_wall_list "${images[@]}" # WALL_LIST
-	echo "Original Image(s): ${WALL_LIST[@]##*/}"
+	echo "Original Image(s): ${WALL_LIST[*]##*/}"
 
 	# Prepare description box to obtain width for positioning
 	if [ -z "$description" ]; then
@@ -517,6 +517,7 @@ update () {
 	purge_cache "$CUR_DIR"
 
 	if [ "$span_image" = true ] || [ ${#DISPLAY_LIST[@]} -lt 2 ]; then
+		echo "Rendering final wallpaper images..."
 		[[ -f "$RES_RESIZE" ]] && cp $RES_RESIZE $CUR_W_RESIZE
 		[[ -f "$RES_DIM" ]] && cp $RES_DIM $CUR_W_DIM
 		[[ -f "$RES_BLUR" ]] && cp $RES_BLUR $CUR_W_BLUR
@@ -534,7 +535,7 @@ update () {
 		[[ -f "$RES_DIMPIXEL" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_DIMPIXEL
 		[[ -f "$RES_COLOR" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_COLOR
 
-		echo Rendering final wallpaper images...
+		echo "Rendering final wallpaper images..."
 		[[ -f "$CUR_W_RESIZE" ]] && convert $CUR_W_RESIZE $PARAM_RESIZE $CUR_W_RESIZE
 		[[ -f "$CUR_W_DIM" ]] && convert $CUR_W_DIM $PARAM_DIM $CUR_W_DIM
 		[[ -f "$CUR_W_BLUR" ]] && convert $CUR_W_BLUR $PARAM_BLUR $CUR_W_BLUR
