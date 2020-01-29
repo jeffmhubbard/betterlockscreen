@@ -211,8 +211,12 @@ get_wall_list() {
 		exit 1
 	fi
 
+	# if spanning return 1 image
+	if [ "$span_image" = true ]; then
+		get_image "${paths[0]}"
+
 	# if # paths is 1
-	if [ "${#paths[@]}" -eq 1 ]; then
+	elif [ "${#paths[@]}" -eq 1 ]; then
 		for ((i=0; i<${#DISPLAY_LIST[@]}; i++)); do
 			# add same image to $WALL_LIST for each display
 			get_image "${paths[0]}"
