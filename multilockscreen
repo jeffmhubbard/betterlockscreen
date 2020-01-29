@@ -478,18 +478,24 @@ update () {
 			positions_desc+=("+$((descrect_x))+$((descrect_y))")
 		fi
 
-		echo "Display: $device ($id)"
-		echo "Resolution: $resolution"
-
 		local path="$CACHE_DIR/$id-$device"
 		purge_cache "$path"
 
-		if [ "$span_image" = true ] && [ "$id" -gt 1 ]; then
-			continue
+		if [ "$span_image" = true ]; then
+			if [ "$id" -gt 1 ]; then
+				continue
+			else
+				device="[span]"
+				id="*"
+				resolution="$TOTAL_SIZE"
+			fi
 		fi
 
+		echo "Display: $device ($id)"
+		echo "Resolution: $resolution"
+
 		if [ "$span_image" = true ]; then
-			resize_and_render "$USER_WALL" "$path" "$TOTAL_SIZE"
+			resize_and_render "$USER_WALL" "$path" "$resolution"
 		else
 			resize_and_render "$USER_WALL" "$path" "$resolution"
 
