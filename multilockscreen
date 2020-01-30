@@ -217,7 +217,7 @@ get_wall_list() {
 
 	# multiple images and spanning conflict, bail out
 	if [ "${#paths[@]}" -gt 1 ] && [ "$span_image" = true ]; then
-		echof err "can't usage --span with multiple images!"
+		echof err "Can't use --span with multiple images!"
 		exit 1
 	fi
 
