@@ -697,7 +697,7 @@ for arg in "$@"; do
 		-l | --lock)
 			runlock=true
 			[[ $runsuspend ]] || lockargs+=(-n)
-			[[ ${2:0:1} = '-' ]] && shift 1 || { lockstyle="$2"; shift 2; }
+            { [[ ${2:0:1} = '-' ]] && shift 1; } || { lockstyle="$2"; shift 2; }
 			;;
 
 		-s | --suspend)
