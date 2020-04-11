@@ -34,6 +34,7 @@ init_config () {
 	verifcolor=ffffffff
 	timecolor=ffffffff
 	datecolor=ffffffff
+	nocolor=00000000
 
 	# read user config
 	USER_CONF="$HOME/.config/multilock/config"
@@ -102,7 +103,7 @@ lock() {
 		--keyhlcolor=$keyhlcolor --bshlcolor=$bshlcolor --separatorcolor=$separatorcolor \
 		--insidevercolor=$insidevercolor --insidewrongcolor=$insidewrongcolor \
 		--ringvercolor=$ringvercolor --ringwrongcolor=$ringwrongcolor --indpos='x+280:y+h-70' \
-		--radius=20 --ring-width=4 --veriftext='' --wrongtext='' \
+		--radius=20 --ring-width=4 --veriftext='' --wrongtext='' --wrongcolor="$nocolor" \
 		--verifcolor="$verifcolor" --timecolor="$timecolor" --datecolor="$datecolor" \
 		--time-font="$font" --date-font="$font" --layout-font="$font" --verif-font="$font" --wrong-font="$font" \
 		--noinputtext='' --force-clock --pass-media-keys --pass-screen-keys --pass-power-keys \
@@ -116,6 +117,7 @@ failsafe() {
 
 	local bgcolor="000000"
 	local text="ffffffff"
+	local error="ff0000"
 
 	i3lock \
 		-c "$bgcolor" \
@@ -124,7 +126,7 @@ failsafe() {
 		--datepos='ix-240:iy+25' \
 		--clock --date-align 1 --datestr "$locktext" \
 		--indpos='x+280:y+h-70' \
-		--radius=20 --ring-width=4 --veriftext='' --wrongtext='' \
+		--radius=20 --ring-width=4 --veriftext='' --wrongtext='' --wrongcolor="$error" \
 		--verifcolor="$text" --timecolor="$text" --datecolor="$text" \
 		--time-font="$font" --date-font="$font" --layout-font="$font" --verif-font="$font" --wrong-font="$font" \
 		--noinputtext='' --force-clock
