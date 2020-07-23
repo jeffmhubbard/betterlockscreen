@@ -706,7 +706,6 @@ for arg in "$@"; do
 
 		-l | --lock)
 			runlock=true
-			[[ $runsuspend ]] || lockargs+=(-n)
 			if [[ ${2:0:1} = '-' ]]; then
 				shift 1
 			else
@@ -785,6 +784,7 @@ done
 [[ $runupdate ]] && update "${imagepaths[@]}"
 
 # Activate lockscreen
+[[ $runsuspend ]] || lockargs+=(-n)
 [[ $runlock ]] && lockselect "$lockstyle" && \
 	{ [[ $runsuspend ]] && systemctl suspend; }
 
