@@ -226,7 +226,7 @@ for arg in "$@"; do
 
 		-h | --help | *)
 			# TODO: Add usage info
-			break
+			exit 0
 			;;
 	esac
 done
