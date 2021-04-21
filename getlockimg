@@ -1,0 +1,200 @@
+#!/usr/bin/env bash
+
+set -eu
+
+IMAGE_PATHS=()
+DISPLAY_SIZES=()
+DISPLAY_OFFSETS=()
+EFFECT=none
+
+get_filename() {
+  local input_image="$1"
+  local effect="$2"
+  local size="$3"
+  local digest=$(echo "$input_image $effect $size" | md5sum)
+
+  echo "$CACHE_DIR/${digest:0:32}.png"
+}
+
+base_resize() {
+  local size="$3"
+  eval convert "$1" -resize "$size""^" -gravity center -extent "$size" "$2"
+}
+
+apply_dim_effect() {
+	local input="$1"
+	local output="$2"
+
+	eval convert "$input" \
+		-fill black -colorize "$DIM_LEVEL"% \
+		"$output"
+}
+
+apply_blur_effect() {
+  local input="$1"
+  local output="$2"
+  local size="$3"
+
+  blur_shrink=$(echo "scale=2; 20 / $BLUR_LEVEL" | bc)
+  blur_sigma=$(echo "scale=2; 0.6 * $BLUR_LEVEL" | bc)
+  eval convert "$input" \
+    -filter Gaussian \
+    -resize "$blur_shrink%" \
+    -define "filter:sigma=$blur_sigma" \
+    -resize "$size^" -gravity center -extent "$size" \
+    "$output"
+}
+
+apply_dimblur_effect() {
+  local input="$1"
+  local output="$2"
+  local size="$3"
+
+  blur_shrink=$(echo "scale=2; 20 / $BLUR_LEVEL" | bc)
+  blur_sigma=$(echo "scale=2; 0.6 * $BLUR_LEVEL" | bc)
+  eval convert "$input" \
+    -fill black -colorize "$DIM_LEVEL"% \
+    -filter Gaussian \
+    -resize "$blur_shrink%" \
+    -define "filter:sigma=$blur_sigma" \
+    -resize "$size^" -gravity center -extent "$size" \
+    "$output"
+}
+
+apply_pixel_effect() {
+  local input="$1"
+  local output="$2"
+
+  IFS=',' read -ra range <<< "$PIXEL_SCALE"
+  eval convert "$input" \
+    -scale "${range[0]}"% -scale "${range[1]}"% \
+    "$output"
+}
+
+apply_dimpixel_effect() {
+  local input="$1"
+  local output="$2"
+
+  IFS=',' read -ra range <<< "$PIXEL_SCALE"
+  eval convert "$input" \
+    -fill black -colorize "$DIM_LEVEL"% \
+    -scale "${range[0]}"% -scale "${range[1]}"% \
+    "$output"
+}
+
+apply_color_effect() {
+  local output="$1"
+  local size="$2"
+
+  eval convert -size "$size" canvas:\#"$SOLID_COLOR" "$output"
+}
+
+gen_image() {
+  mkdir -p "$CACHE_DIR"
+
+  local input="${IMAGE_PATHS[0]}"
+  local target_size="${DISPLAY_SIZES[0]}"
+
+  local resize_res=$(get_filename "$input" none "$target_size")
+  if [ ! -f "$resize_res" ]; then
+    base_resize "$input" "$resize_res" "$target_size"
+  fi
+
+  if [ "$EFFECT" = 'none' ]; then
+    echo $resize_res
+    exit 0
+  fi
+
+  local effect_res=$(get_filename "$input" $EFFECT "$target_size")
+  if [ ! -f "$effect_res" ]; then
+    case "$EFFECT" in
+      dim) apply_dim_effect "$resize_res" "$effect_res";;
+      blur) apply_blur_effect "$resize_res" "$effect_res" "$target_size";;
+      dimblur) apply_dimblur_effect "$resize_res" "$effect_res" "$target_size";;
+      pixel) apply_pixel_effect "$resize_res" "$effect_res";;
+      dimpixel) apply_dimpixel_effect "$resize_res" "$effect_res";;
+      color) apply_color_effect "$effect_res" "$target_size";;
+
+      *)
+        # TODO: Print a message about unrecognized effect?
+        exit 1
+        ;;
+    esac
+  fi
+
+  echo $effect_res
+}
+
+verify_args() {
+  if [ "${#IMAGE_PATHS[@]}" -ne 1 ]; then
+    # TODO: Add error msg
+    exit 1
+  fi
+
+  if [[ -d "${IMAGE_PATHS[0]}" ]]; then
+    # TODO: Add error msg
+    exit 1
+  fi
+
+  if [ "${#DISPLAY_SIZES[@]}" -ne 1 ]; then
+    # TODO: Add error msg
+    exit 1
+  fi
+
+  # TODO: verify cache dir is specified
+}
+
+for arg in "$@"; do
+  [[ "${arg:0:1}" = '-' ]] || continue
+
+  case "$1" in
+    --cachedir)
+      CACHE_DIR="$2"
+      shift 2
+      ;;
+
+    --img)
+      IMAGE_PATHS+=("$2")
+      shift 2
+      ;;
+
+    --display)
+      DISPLAY_SIZES+=("$2")
+      DISPLAY_OFFSETS+=("$3")
+      shift 3
+      ;;
+
+    --effect)
+      EFFECT="$2"
+      shift 2
+      ;;
+
+    --dim)
+      DIM_LEVEL="$2"
+      shift 2
+      ;;
+
+    --blur)
+      BLUR_LEVEL="$2"
+      shift 2
+      ;;
+
+    --pixel)
+      PIXEL_SCALE="$2"
+      shift 2
+      ;;
+
+    --color)
+      SOLID_COLOR="${2//\#/}"
+      shift 2
+      ;;
+
+    -h | --help | *)
+      # TODO: Add usage info
+      break
+      ;;
+  esac
+done
+
+verify_args
+gen_image
