@@ -95,7 +95,6 @@ lock() {
 	local image="$1"
 
 	i3lock \
-		--no-verify \
 		-i "$image" \
 		-c "$bgcolor" \
 		--screen "$display_on" \
@@ -350,7 +349,7 @@ update () {
 			USER_WALL="${USER_WALL// /\\ }"
 		fi
 
-		IFS=' ' read -r -a dinfo	<<< "$display"
+		IFS=' ' read -r -a dinfo  <<< "$display"
 		local id="${dinfo[0]}"
 		local geometry="${dinfo[2]}"
 
@@ -485,52 +484,52 @@ usage() {
 	echo
 	echo "Usage: multilockscreen [-u <PATH>] [-l <EFFECT>] [-w <EFFECT>]"
 	echo
-	echo "	-u --update <PATH>"
-	echo "			Update lock screen image"
+	echo "  -u --update <PATH>"
+	echo "      Update lock screen image"
 	echo
-	echo "	-l --lock <EFFECT>"
-	echo "			Lock screen with cached image"
+	echo "  -l --lock <EFFECT>"
+	echo "      Lock screen with cached image"
 	echo
-	echo "	-w --wall <EFFECT>"
-	echo "			Set wallpaper with cached image"
+	echo "  -w --wall <EFFECT>"
+	echo "      Set wallpaper with cached image"
 	echo
 	echo "Additional arguments:"
 	echo
-	echo "	--display <N>"
-	echo "			Set display to draw loginbox"
+	echo "  --display <N>"
+	echo "      Set display to draw loginbox"
 	echo
-	echo "	--span"
-	echo "			Scale image to span multiple displays"
+	echo "  --span"
+	echo "      Scale image to span multiple displays"
 	echo
-	echo "	--off <N>"
-	echo "			Turn display off after N minutes"
+	echo "  --off <N>"
+	echo "      Turn display off after N minutes"
 	echo
-	echo "	--fx <EFFECT,EFFECT,EFFECT>"
-	echo "			List of effects to generate"
+	echo "  --fx <EFFECT,EFFECT,EFFECT>"
+	echo "      List of effects to generate"
 	echo
-	echo "	--desc <DESCRIPTION>"
-	echo "			Set a description for the new lock screen image"
-	echo "			(Only has an effect in combination with --update)"
+	echo "  --desc <DESCRIPTION>"
+	echo "      Set a description for the new lock screen image"
+	echo "      (Only has an effect in combination with --update)"
 	echo
-	echo "	--show-layout"
-	echo "			Show current keyboard layout"
+	echo "  --show-layout"
+	echo "      Show current keyboard layout"
 	echo
-	echo "	-- <ARGS>"
-	echo "			Pass additional arguments to i3lock"
+	echo "  -- <ARGS>"
+	echo "      Pass additional arguments to i3lock"
 	echo
 	echo "Effects arguments:"
 	echo
-	echo "	--dim <N>"
-	echo "			Dim image N percent (0-100)"
+	echo "  --dim <N>"
+	echo "      Dim image N percent (0-100)"
 	echo
-	echo "	--blur <N>"
-	echo "			Blur image N amount (0.0-1.0)"
+	echo "  --blur <N>"
+	echo "      Blur image N amount (0.0-1.0)"
 	echo
-	echo "	--pixel <N,N>"
-	echo "			Pixelate image with N shrink and N grow (unsupported)"
+	echo "  --pixel <N,N>"
+	echo "      Pixelate image with N shrink and N grow (unsupported)"
 	echo
-	echo "	--color <HEX>"
-	echo "			Solid color background with HEX"
+	echo "  --color <HEX>"
+	echo "      Solid color background with HEX"
 	echo
 	exit 1
 }
