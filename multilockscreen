@@ -381,7 +381,7 @@ update () {
 
 	local compose_params=(--cachedir "$CACHE_DIR" --totalsize "$TOTAL_SIZE")
 	if [ "$span_image" = true ]; then
-		compose_params+=(--img "${IMAGE_PATHS[0]}" --display "$TOTAL_SIZE" "+0+0")
+		compose_params+=(--img "${WALL_LIST[0]}" --display "$TOTAL_SIZE" "+0+0")
 	else
 		compose_params+=(${display_params[@]})
 	fi
