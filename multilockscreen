@@ -95,7 +95,7 @@ lock() {
 	local image="$1"
 
 	i3lock \
-    --no-verify \
+		--no-verify \
 		-i "$image" \
 		-c "$bgcolor" \
 		--screen "$display_on" \
@@ -277,41 +277,6 @@ get_image() {
 
 }
 
-# scale base image and generate effects
-resize_and_render () {
-	local base="$1"
-	local resolution="$2"
-
-  local common_image_params=(--cachedir "$CACHE_DIR" --img "$base" --display "$resolution" "0x0")
-
-	# resource paths
-  RES_RESIZE="$(getlockimg "${common_image_params[@]}")"
-
-  # The following variables are intentionally assigned to a (probably)
-  # non-existent file. The rest of this script uses the existence of these files
-  # as a proxy for "is this effect enabled in the fx_list". If an effect is
-  # desired, the corresponding RES_* variable will be assigned to the result
-  # of `getlockimg` in the case-statement below.
-	RES_DIM="$CACHE_DIR/effect-is-disabled.png"
-	RES_BLUR="$CACHE_DIR/effect-is-disabled.png"
-	RES_DIMBLUR="$CACHE_DIR/effect-is-disabled.png"
-	RES_PIXEL="$CACHE_DIR/effect-is-disabled.png"
-	RES_DIMPIXEL="$CACHE_DIR/effect-is-disabled.png"
-	RES_COLOR="$CACHE_DIR/effect-is-disabled.png"
-
-	# effects
-	for effect in "${fx_list[@]}"; do
-		case $effect in
-      dim) RES_DIM="$(getlockimg "${common_image_params[@]}" --effect dim --dim "$dim_level")";;
-      blur) RES_BLUR="$(getlockimg "${common_image_params[@]}" --effect blur --blur "$blur_level")";;
-      dimblur) RES_DIMBLUR="$(getlockimg "${common_image_params[@]}" --effect dimblur --dim "$dim_level" --blur "$blur_level")";;
-      pixel) RES_PIXEL="$(getlockimg "${common_image_params[@]}" --effect pixel --pixel "$pixel_scale")";;
-      dimpixel) RES_DIMPIXEL="$(getlockimg "${common_image_params[@]}" --effect dimpixel --dim "$dim_level" --pixel "$pixel_scale")";;
-      color) RES_COLOR="$(getlockimg "${common_image_params[@]}" --effect color --color "$solid_color")";;
-		esac
-	done
-}
-
 # create loginbox rectangle, set $RECTANGLE
 create_loginbox () {
 	RECTANGLE="$CUR_DIR/rectangle.png"
@@ -353,7 +318,6 @@ purge_cache () {
 
 # update lockscreen and wallpaper images
 update () {
-
 	local images=("$@")
 
 	echof act "Updating image cache..."
@@ -376,6 +340,7 @@ update () {
 		local descheight=$(identify -format "%[fx:h]" "$DESCRECT")
 	fi
 
+	local display_params=()
 	for ((i=0; i<${#DISPLAY_LIST[@]}; i++)); do
 		display="${DISPLAY_LIST[$i]}"
 		USER_WALL="${WALL_LIST[$i]}"
@@ -385,14 +350,15 @@ update () {
 			USER_WALL="${USER_WALL// /\\ }"
 		fi
 
-		IFS=' ' read -r -a dinfo  <<< "$display"
+		IFS=' ' read -r -a dinfo	<<< "$display"
 		local id="${dinfo[0]}"
-		local device="${dinfo[1]}"
 		local geometry="${dinfo[2]}"
 
 		read -r -a cols <<< "${geometry//[x+-]/ }"
 		local position="${geometry#*${cols[1]}}"
 		local resolution="${geometry%${position}*}"
+
+		display_params+=("--img" "$USER_WALL" "--display" "$resolution" "$position")
 
 		if [[ $id -eq "$display_on" ]] || [[ "$display_on" -eq 0 ]]; then
 
@@ -412,66 +378,37 @@ update () {
 			descrect_y=$((pos_y + res_y - descheight - $(logical_px 20 2)))
 			positions_desc+=("+$((descrect_x))+$((descrect_y))")
 		fi
+	done
 
-		if [ "$span_image" = true ]; then
-			if [ "$id" -gt 1 ]; then
-				continue
-			else
-				device="[span]"
-				id="*"
-				resolution="$TOTAL_SIZE"
-			fi
-		fi
+	local compose_params=(--cachedir "$CACHE_DIR" --totalsize "$TOTAL_SIZE")
+	if [ "$span_image" = true ]; then
+		compose_params+=(--img "${IMAGE_PATHS[0]}" --display "$TOTAL_SIZE" "+0+0")
+	else
+		compose_params+=(${display_params[@]})
+	fi
 
-		echof info "Processing display: $device ($id)"
-		echof info "Resolution: $resolution"
-
-		if [ "$span_image" = true ]; then
-			resize_and_render "$USER_WALL" "$resolution"
-		else
-			resize_and_render "$USER_WALL" "$resolution"
-
-			PARAM_RESIZE="$PARAM_RESIZE $RES_RESIZE -geometry $position -composite "
-			PARAM_DIM="$PARAM_DIM $RES_DIM -geometry $position -composite "
-			PARAM_BLUR="$PARAM_BLUR $RES_BLUR -geometry $position -composite "
-			PARAM_DIMBLUR="$PARAM_DIMBLUR $RES_DIMBLUR -geometry $position -composite "
-			PARAM_PIXEL="$PARAM_PIXEL $RES_PIXEL -geometry $position -composite "
-			PARAM_DIMPIXEL="$PARAM_DIMPIXEL $RES_DIMPIXEL -geometry $position -composite "
-			PARAM_COLOR="$PARAM_COLOR $RES_COLOR -geometry $position -composite "
-		fi
-
+	RES_RESIZE="$(getlockimg "${compose_params[@]}")"
+	for effect in "${fx_list[@]}"; do
+		case $effect in
+			dim) RES_DIM="$(getlockimg "${compose_params[@]}" --effect dim --dim "$dim_level")";;
+			blur) RES_BLUR="$(getlockimg "${compose_params[@]}" --effect blur --blur "$blur_level")";;
+			dimblur) RES_DIMBLUR="$(getlockimg "${compose_params[@]}" --effect dimblur --dim "$dim_level" --blur "$blur_level")";;
+			pixel) RES_PIXEL="$(getlockimg "${compose_params[@]}" --effect pixel --pixel "$pixel_scale")";;
+			dimpixel) RES_DIMPIXEL="$(getlockimg "${compose_params[@]}" --effect dimpixel --dim "$dim_level" --pixel "$pixel_scale")";;
+			color) RES_COLOR="$(getlockimg "${compose_params[@]}" --effect color --color "$solid_color")";;
+		esac
 	done
 
 	purge_cache "$CUR_DIR"
 
-	if [ "$span_image" = true ] || [ ${#DISPLAY_LIST[@]} -lt 2 ]; then
-		echof act "Rendering final wallpaper images..."
-		[[ -f "$RES_RESIZE" ]] && cp $RES_RESIZE $CUR_W_RESIZE
-		[[ -f "$RES_DIM" ]] && cp $RES_DIM $CUR_W_DIM
-		[[ -f "$RES_BLUR" ]] && cp $RES_BLUR $CUR_W_BLUR
-		[[ -f "$RES_DIMBLUR" ]] && cp $RES_DIMBLUR $CUR_W_DIMBLUR
-		[[ -f "$RES_PIXEL" ]] && cp $RES_PIXEL $CUR_W_PIXEL
-		[[ -f "$RES_DIMPIXEL" ]] && cp $RES_DIMPIXEL $CUR_W_DIMPIXEL
-		[[ -f "$RES_COLOR" ]] && cp $RES_COLOR $CUR_W_COLOR
-	else
-		echof act "Creating canvas: $TOTAL_SIZE"
-		[[ -f "$RES_RESIZE" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_RESIZE
-		[[ -f "$RES_DIM" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_DIM
-		[[ -f "$RES_BLUR" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_BLUR
-		[[ -f "$RES_DIMBLUR" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_DIMBLUR
-		[[ -f "$RES_PIXEL" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_PIXEL
-		[[ -f "$RES_DIMPIXEL" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_DIMPIXEL
-		[[ -f "$RES_COLOR" ]] && convert -size $TOTAL_SIZE 'xc:blue' $CUR_W_COLOR
-
-		echof act "Rendering final wallpaper images..."
-		[[ -f "$CUR_W_RESIZE" ]] && convert $CUR_W_RESIZE $PARAM_RESIZE $CUR_W_RESIZE
-		[[ -f "$CUR_W_DIM" ]] && convert $CUR_W_DIM $PARAM_DIM $CUR_W_DIM
-		[[ -f "$CUR_W_BLUR" ]] && convert $CUR_W_BLUR $PARAM_BLUR $CUR_W_BLUR
-		[[ -f "$CUR_W_DIMBLUR" ]] && convert $CUR_W_DIMBLUR $PARAM_DIMBLUR $CUR_W_DIMBLUR
-		[[ -f "$CUR_W_PIXEL" ]] && convert $CUR_W_PIXEL $PARAM_PIXEL $CUR_W_PIXEL
-		[[ -f "$CUR_W_DIMPIXEL" ]] && convert $CUR_W_DIMPIXEL $PARAM_DIMPIXEL $CUR_W_DIMPIXEL
-		[[ -f "$CUR_W_COLOR" ]] && convert $CUR_W_COLOR $PARAM_COLOR $CUR_W_COLOR
-	fi
+	echof act "Rendering final wallpaper images..."
+	[[ -f "$RES_RESIZE" ]] && cp $RES_RESIZE $CUR_W_RESIZE
+	[[ -f "$RES_DIM" ]] && cp $RES_DIM $CUR_W_DIM
+	[[ -f "$RES_BLUR" ]] && cp $RES_BLUR $CUR_W_BLUR
+	[[ -f "$RES_DIMBLUR" ]] && cp $RES_DIMBLUR $CUR_W_DIMBLUR
+	[[ -f "$RES_PIXEL" ]] && cp $RES_PIXEL $CUR_W_PIXEL
+	[[ -f "$RES_DIMPIXEL" ]] && cp $RES_DIMPIXEL $CUR_W_DIMPIXEL
+	[[ -f "$RES_COLOR" ]] && cp $RES_COLOR $CUR_W_COLOR
 
 	echof act "Rendering final lockscreen images..."
 
@@ -548,52 +485,52 @@ usage() {
 	echo
 	echo "Usage: multilockscreen [-u <PATH>] [-l <EFFECT>] [-w <EFFECT>]"
 	echo
-	echo "  -u --update <PATH>"
-	echo "      Update lock screen image"
+	echo "	-u --update <PATH>"
+	echo "			Update lock screen image"
 	echo
-	echo "  -l --lock <EFFECT>"
-	echo "      Lock screen with cached image"
+	echo "	-l --lock <EFFECT>"
+	echo "			Lock screen with cached image"
 	echo
-	echo "  -w --wall <EFFECT>"
-	echo "      Set wallpaper with cached image"
+	echo "	-w --wall <EFFECT>"
+	echo "			Set wallpaper with cached image"
 	echo
 	echo "Additional arguments:"
 	echo
-	echo "  --display <N>"
-	echo "      Set display to draw loginbox"
+	echo "	--display <N>"
+	echo "			Set display to draw loginbox"
 	echo
-	echo "  --span"
-	echo "      Scale image to span multiple displays"
+	echo "	--span"
+	echo "			Scale image to span multiple displays"
 	echo
-	echo "  --off <N>"
-	echo "      Turn display off after N minutes"
+	echo "	--off <N>"
+	echo "			Turn display off after N minutes"
 	echo
-	echo "  --fx <EFFECT,EFFECT,EFFECT>"
-	echo "      List of effects to generate"
+	echo "	--fx <EFFECT,EFFECT,EFFECT>"
+	echo "			List of effects to generate"
 	echo
-	echo "  --desc <DESCRIPTION>"
-	echo "      Set a description for the new lock screen image"
-	echo "      (Only has an effect in combination with --update)"
+	echo "	--desc <DESCRIPTION>"
+	echo "			Set a description for the new lock screen image"
+	echo "			(Only has an effect in combination with --update)"
 	echo
-	echo "  --show-layout"
-	echo "      Show current keyboard layout"
+	echo "	--show-layout"
+	echo "			Show current keyboard layout"
 	echo
-	echo "  -- <ARGS>"
-	echo "      Pass additional arguments to i3lock"
+	echo "	-- <ARGS>"
+	echo "			Pass additional arguments to i3lock"
 	echo
 	echo "Effects arguments:"
 	echo
-	echo "  --dim <N>"
-	echo "      Dim image N percent (0-100)"
+	echo "	--dim <N>"
+	echo "			Dim image N percent (0-100)"
 	echo
-	echo "  --blur <N>"
-	echo "      Blur image N amount (0.0-1.0)"
+	echo "	--blur <N>"
+	echo "			Blur image N amount (0.0-1.0)"
 	echo
-	echo "  --pixel <N,N>"
-	echo "      Pixelate image with N shrink and N grow (unsupported)"
+	echo "	--pixel <N,N>"
+	echo "			Pixelate image with N shrink and N grow (unsupported)"
 	echo
-	echo "  --color <HEX>"
-	echo "      Solid color background with HEX"
+	echo "	--color <HEX>"
+	echo "			Solid color background with HEX"
 	echo
 	exit 1
 }
