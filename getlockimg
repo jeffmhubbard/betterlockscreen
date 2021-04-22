@@ -14,11 +14,7 @@ get_composed_filename() {
 }
 
 get_single_filename() {
-	local input_image="$1"
-	local effect="$2"
-	local size="$3"
-	local digest=$(echo $input_image $effect $size | md5sum)
-
+	local digest=$(echo $@ | md5sum)
 	echo "$CACHE_DIR/${digest:0:32}.png"
 }
 
@@ -109,15 +105,33 @@ gen_single_image() {
 		exit 0
 	fi
 
-	local effect_res=$(get_single_filename "$input" $EFFECT "$target_size")
+	local effect_res=''
 	if [ ! -f "$effect_res" ]; then
 		case "$EFFECT" in
-			dim) apply_dim_effect "$resize_res" "$effect_res";;
-			blur) apply_blur_effect "$resize_res" "$effect_res" "$target_size";;
-			dimblur) apply_dimblur_effect "$resize_res" "$effect_res" "$target_size";;
-			pixel) apply_pixel_effect "$resize_res" "$effect_res";;
-			dimpixel) apply_dimpixel_effect "$resize_res" "$effect_res";;
-			color) apply_color_effect "$effect_res" "$target_size";;
+			dim)
+				effect_res=$(get_single_filename "$input" $EFFECT "$target_size" $DIM_LEVEL)
+				apply_dim_effect "$resize_res" "$effect_res"
+				;;
+			blur)
+				effect_res=$(get_single_filename "$input" $EFFECT "$target_size" $BLUR_LEVEL)
+				apply_blur_effect "$resize_res" "$effect_res" "$target_size"
+				;;
+			dimblur)
+				effect_res=$(get_single_filename "$input" $EFFECT "$target_size" $DIM_LEVEL $BLUR_LEVEL)
+				apply_dimblur_effect "$resize_res" "$effect_res" "$target_size"
+				;;
+			pixel)
+				effect_res=$(get_single_filename "$input" $EFFECT "$target_size" $PIXEL_SCALE)
+				apply_pixel_effect "$resize_res" "$effect_res"
+				;;
+			dimpixel)
+				effect_res=$(get_single_filename "$input" $EFFECT "$target_size" $DIM_LEVEL $PIXEL_SCALE)
+				apply_dimpixel_effect "$resize_res" "$effect_res"
+				;;
+			color)
+				effect_res=$(get_single_filename $EFFECT "$target_size" $SOLID_COLOR)
+				apply_color_effect "$effect_res" "$target_size"
+				;;
 
 			*)
 				# TODO: Print a message about unrecognized effect?
